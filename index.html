@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pose Coach – วิเคราะห์ท่าออกกำลังกาย</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#e9edf0;--card:#fff;--ink:#101820;--mut:#5b6873;--bd:#cfd7dd;--ok:#0a7d6e;--bad:#d1380f;--ac:#1d4ed8;--sk:#101820;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1419;--card:#17202a;--ink:#e8eef3;--mut:#93a1ad;--bd:#2b3946;--ok:#37c8b0;--bad:#ff7a55;--ac:#7aa2ff;--sk:#e8eef3;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1419;--card:#17202a;--ink:#e8eef3;--mut:#93a1ad;--bd:#2b3946;--ok:#37c8b0;--bad:#ff7a55;--ac:#7aa2ff;--sk:#e8eef3;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "IBM Plex Sans Thai",system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1040px;margin:0 auto;padding:16px}
+h1{font-size:1.4rem;margin:0 0 2px}
+.sub{color:var(--mut);margin:0 0 14px;font-size:.92rem}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid var(--bd);background:var(--card);color:var(--ink);padding:7px 13px;border-radius:8px;font:inherit;cursor:pointer}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:14px}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.stage{position:relative;background:#000;border-radius:10px;overflow:hidden;aspect-ratio:4/3;display:grid;place-items:center}
+.stage canvas{width:100%;height:100%;object-fit:contain}
+.stage.mir canvas{transform:scaleX(-1)}
+#msg{position:absolute;left:0;right:0;bottom:0;padding:10px 14px;background:rgba(0,0,0,.72);color:#fff;font-size:.95rem}
+video{display:none}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.bar button,.bar label{border:1px solid var(--bd);background:var(--card);color:var(--ink);padding:8px 14px;border-radius:8px;font:inherit;cursor:pointer}
+.bar .pri{background:var(--ac);border-color:var(--ac);color:#fff}
+button:focus-visible,label:focus-within{outline:3px solid var(--ac);outline-offset:2px}
+.panel{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:14px;margin-bottom:12px}
+.panel h2{font-size:1rem;margin:0 0 8px}
+.big{display:flex;gap:18px;align-items:baseline}
+.big b{font-size:2.6rem;line-height:1}
+.mut{color:var(--mut);font-size:.88rem}
+.cue{margin:4px 0;padding:6px 10px;border-radius:6px;border-left:4px solid var(--bad);background:color-mix(in srgb,var(--bad) 10%,transparent)}
+.cue.ok{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 10%,transparent)}
+table{width:100%;border-collapse:collapse;font-size:.92rem}
+td{padding:3px 0;border-bottom:1px solid var(--bd)}td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+ol{margin:0;padding-left:20px;font-size:.92rem}
+.note{font-size:.85rem;color:var(--mut)}
+.find{display:flex;gap:10px;align-items:center;margin:0 0 8px}
+.find input{flex:1;max-width:420px;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+.moves button{font-size:.92rem;padding:6px 11px}
+.moves button[aria-pressed="true"]{background:var(--ac);border-color:var(--ac);color:#fff}
+details.panel{padding:10px 14px}summary{cursor:pointer}
+.cf{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px;align-items:end}
+.cf label{display:grid;gap:3px;font-size:.88rem;color:var(--mut)}
+.cf input,.cf select{padding:7px 9px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.cf button{border:1px solid var(--ac);padding:8px 12px;border-radius:8px;font:inherit;cursor:pointer}
+.danger{border:1px solid var(--bad)!important;color:var(--bad)!important;background:var(--card);padding:6px 12px;border-radius:8px;font:inherit;cursor:pointer}
+.bar input{width:150px;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--ink);font:inherit}
+.mv{margin:10px 0;padding:8px 12px;border-left:4px solid var(--ac);background:color-mix(in srgb,var(--ac) 7%,transparent);border-radius:0 8px 8px 0}
+.mv h3{margin:0 0 4px;font-size:.95rem}.mv ol{margin:4px 0 0}
+.del{border:1px solid var(--bd);background:var(--card);color:var(--bad);border-radius:6px;padding:1px 8px;font:inherit;font-size:.82rem;cursor:pointer;margin-left:6px}
+.brow{display:grid;grid-template-columns:70px 1fr auto;gap:8px;align-items:center;font-size:.9rem;margin:3px 0}
+.brow i{display:block;height:12px;border-radius:6px;background:var(--ac);min-width:2px}
+.sum{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0}.sum b{font-size:1.6rem;display:block;line-height:1.1}
+#logBody table{margin:8px 0}#logBody th{text-align:left;font-weight:500;color:var(--mut);font-size:.85rem;padding:3px 0;border-bottom:1px solid var(--bd)}
+#logBody td:last-child{text-align:left}
+#logBody details{border-bottom:1px solid var(--bd);padding:6px 0}
+textarea{width:100%;min-height:150px;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--ink);font:12px/1.4 ui-monospace,monospace}
+.sel{width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;margin:0 0 8px}
+#board th{text-align:left;font-weight:500;color:var(--mut);font-size:.85rem;padding:3px 0;border-bottom:1px solid var(--bd)}
+#board td:last-child{text-align:left}#board .me{color:var(--ac);font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<h1>Pose Coach</h1>
+<p class="sub">วิเคราะห์ท่าออกกำลังกายจากกล้องหรือวิดีโอ ประมวลผลในเครื่องของคุณ ไม่อัปโหลดภาพไปที่ใด</p>
+
+<div class="tabs" id="tabs" role="group" aria-label="เลือกหมวดกีฬา"></div>
+<div class="find"><input id="q" type="search" placeholder="ค้นชื่อท่าในหมวดนี้ เช่น สควอท, สแมช, หมัดตรง" aria-label="ค้นหาท่า"><span class="mut" id="cnt"></span></div>
+<select id="moves" class="sel" aria-label="เลือกท่า"></select>
+<div class="bar"><button type="button" id="bDelMove" class="danger" hidden>ลบท่าที่กำหนดเองนี้</button></div>
+<details id="custom" class="panel"><summary>สร้างท่าที่กำหนดเอง (ตั้งชื่อและเกณฑ์มุมเอง)</summary>
+<div class="cf"><label>ชื่อท่า<input id="cName" type="text"></label>
+<label>ข้อต่อที่วัด<select id="cJoint"><option value="elbow">ศอก</option><option value="knee">เข่า</option><option value="hip">สะโพก</option><option value="shoulder">ไหล่</option><option value="body">ลำตัว (ไหล่-สะโพก-ข้อเท้า)</option></select></label>
+<label>ท่าเริ่มต้นอยู่ที่<select id="cRest"><option value="hi">มุมกว้าง (เหยียด)</option><option value="lo">มุมแคบ (งอ)</option></select></label>
+<label>เกณฑ์มุมกว้าง °<input id="cHi" type="number" value="160"></label>
+<label>เกณฑ์มุมแคบ °<input id="cLo" type="number" value="90"></label>
+<button class="pri" id="cAdd" type="button">เพิ่มท่าและเริ่มใช้</button></div></details>
+
+<div class="grid">
+<div>
+  <div class="stage" id="stage"><canvas id="cv" width="640" height="480"></canvas><div id="msg">เลือกท่า แล้วกดเปิดกล้องหรืออัปโหลดวิดีโอ</div></div>
+  <div class="bar">
+    <button class="pri" id="bCam">เปิดกล้อง</button>
+    <button id="bFlip">สลับกล้องหน้า/หลัง</button>
+    <label>อัปโหลดวิดีโอ<input id="file" type="file" accept="video/*" hidden></label>
+    <button id="bStop">หยุด</button>
+  </div>
+  <p class="note" id="tip"></p>
+</div>
+
+<div>
+  <div class="panel" id="repPanel">
+    <h2 id="exName">-</h2>
+    <div class="big"><div><b id="reps">0</b><div class="mut" id="repsLbl">จำนวนครั้ง</div></div><div><b id="score">-</b><div class="mut" id="scoreLbl">คะแนนท่าล่าสุด</div></div><div><b id="ang">-</b><div class="mut" id="angLbl">มุม</div></div></div>
+  </div>
+  <div class="bar" id="setBar"><button class="pri" id="bSet" type="button">จบเซตและบันทึก</button><button id="bReset" type="button">ล้างตัวนับ</button>
+<input id="manN" type="number" min="1" placeholder="จำนวนครั้ง/วินาที" aria-label="จำนวนที่ต้องการเพิ่มเอง"><button id="bMan" type="button">เพิ่มเซตเอง</button><span class="mut" id="setMsg"></span></div>
+<p class="note">เปลี่ยนท่าหรือหมวดจะล้างตัวนับที่ยังไม่ได้บันทึก</p>
+<div class="panel"><h2>คำแนะนำสด</h2><div id="cues"><div class="mut">ยังไม่พบร่างกายในภาพ</div></div></div>
+  <div class="panel" id="logPanel"><h2>ผลรายครั้ง</h2><ol id="log"></ol><div class="mut" id="logEmpty">ยังไม่มีข้อมูล</div></div>
+  <div class="panel"><h2>ค่าจากตัวตรวจจับ</h2><table id="tbl"></table></div>
+</div>
+</div>
+<section class="panel" id="board"><h2>🏆 อันดับ</h2>
+<div class="tabs" id="bTabs"><button type="button" data-m="move" aria-pressed="true">ท่านี้ (เรียงตามจำนวน)</button><button type="button" data-m="cat" aria-pressed="false">ทั้งหมวด (เรียงตามคะแนนท่า)</button></div>
+<div id="bBody"></div>
+<details><summary>ตั้งค่าการส่งผลขึ้นอันดับ</summary><div class="cf"><label>ชื่อที่แสดง (ไม่เกิน 20 ตัวอักษร)<input id="bName" maxlength="20"></label><label style="display:flex;gap:8px;align-items:center"><input id="bShare" type="checkbox"> ส่งผลของฉันขึ้นอันดับ</label></div>
+<p class="note">ส่งเฉพาะชื่อ ท่า จำนวน และคะแนน ไม่ส่งภาพหรือวิดีโอ และส่งเฉพาะเซตที่นับด้วยกล้อง (เซตที่เพิ่มเอง ไม่ส่ง) ทุกคนเห็นชื่อที่ตั้งไว้ จึงไม่ควรใช้ชื่อจริงหากไม่ต้องการ</p><span class="mut" id="bMsg"></span></details></section>
+<section class="panel" id="logSec"><h2>บันทึกการออกกำลังกาย</h2>
+<div class="tabs" id="logTabs"><button type="button" data-v="today" aria-pressed="true">วันนี้</button><button type="button" data-v="stats" aria-pressed="false">สถิติและประวัติ</button><button type="button" data-v="export" aria-pressed="false">ส่งออกข้อมูล</button></div>
+<div id="logBody"></div><p class="note" id="logNote">ข้อมูลเก็บไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น ถ้าล้างข้อมูลเบราว์เซอร์หรือเปลี่ยนเครื่อง ข้อมูลจะไม่ตามไป ใช้ "ส่งออกข้อมูล" เพื่อสำรอง</p></section>
+<p class="note">เครื่องมือนี้ใช้ภาพ 2 มิติ จึงเป็นเพียงแนวทางประกอบ ไม่ใช่การวินิจฉัย หากรู้สึกเจ็บให้หยุดทันที และควรให้ผู้ฝึกสอนตรวจทานเกณฑ์ของแต่ละท่า</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js" crossorigin="anonymous"></script>
+<script>
+const $=id=>document.getElementById(id);
+const BASE='https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/';
+const L={sh:11,el:13,wr:15,hp:23,kn:25,an:27}, R={sh:12,el:14,wr:16,hp:24,kn:26,an:28};
+const CONN=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
+
+// ---- ท่าและเกณฑ์ ----
+// M = ท่านับครั้ง: key=มุมหลัก, rest=ท่าเริ่ม(hi เหยียด/lo งอ), hi/lo=เกณฑ์มุม, w=เตือนสด, e=ตรวจตอนจบครั้ง (min/max ของมุมหลัก)
+// HD = ท่าค้าง (นับวินาทีที่ท่าถูก)   เงื่อนไขในกฎคือสิ่งที่ "ผิด" เช่น lean>55
+const TIP='ตั้งกล้องมุมด้านข้าง ให้เห็นทั้งตัวตั้งแต่ศีรษะถึงเท้า แสงสว่างพอ และสวมเสื้อผ้าที่เห็นรูปร่างข้อต่อ';
+const M=(n,kw,k,r,hi,lo,w,e,tip)=>({n,kw,k,rest:r,hi,lo,w:w||[],e:e||[],tip:tip||TIP});
+const HD=(n,kw,k,w,tip)=>({n,kw,k,hold:1,w:w||[],e:[],tip:tip||TIP});
+const CATS=[
+{id:'weight',n:'เวท / บอดีเวท',m:[
+ M('สควอท','squat ขา','knee','hi',160,110,[['lean>55','หลังโน้มไปข้างหน้ามาก ยกอกขึ้น']],[['min>105','ลงไม่ลึกพอ (เข่าควรงอ ≤ 105°)']]),
+ M('เดดลิฟต์ / ฮิปฮินจ์','deadlift rdl หลัง ต้นขาหลัง','hip','hi',165,135,[['knee<110','เข่างอมาก ท่ากลายเป็นสควอท']],[['max<168','ยืนตรงไม่สุด ล็อกสะโพกให้เต็ม'],['min>130','โน้มตัวลงไม่พอ ดันสะโพกไปด้านหลังเพิ่ม']]),
+ M('ลันจ์','lunge ก้าวขา','knee','hi',160,110,[['lean>30','ลำตัวโน้มไปข้างหน้ามาก']],[['min>110','ลงไม่ลึกพอ (เข่าหน้าควรงอ ~90°)']]),
+ M('วิดพื้น','pushup push-up อก','elbow','hi',155,100,[['body<160','ลำตัวไม่เป็นเส้นตรง สะโพกตกหรือยกสูง']],[['min>95','ลงไม่ลึกพอ (ศอก ≤ 95°)'],['max<155','เหยียดแขนไม่สุด']]),
+ M('ชอล์เดอร์เพรส','shoulder press ไหล่ ดันเหนือศีรษะ','elbow','lo',160,100,[['lean>15','แอ่นหลังหรือเอนตัวมาก เกร็งลำตัว']],[['max<165','ดันขึ้นไม่สุด เหยียดแขนเหนือศีรษะ']]),
+ M('ไบเซปเคิร์ล','biceps curl แขน','elbow','hi',150,70,[['arm>30','ศอกลอยไปหน้า แกว่งไหล่'],['lean>15','โยกลำตัวช่วยแรง ลดน้ำหนักลง']],[['min>70','งอแขนไม่สุด']]),
+ M('บาร์เบลล์โรว์ / ดึงพายเรือ','row barbell back หลัง','elbow','hi',150,90,[['hip>150','ก้มลำตัวไม่พอ ควรก้มสะโพกราว 45°'],['hip<70','ก้มลำตัวมากเกินไป']],[['min>100','ดึงศอกไม่สุด บีบสะบัก']]),
+ M('เลทเทอรัลเรส (ยกแขนข้าง)','lateral raise ไหล่ข้าง','shoulder','lo',80,30,[['elbow<120','งอศอกมาก เหยียดแขนให้ตรงขึ้น'],['lean>15','เอนตัวช่วยแรง']],[['max>110','ยกสูงเกินระดับไหล่'],['max<75','ยกไม่ถึงระดับไหล่']],'ตั้งกล้องด้านหน้า ให้เห็นแขนทั้งสองข้าง'),
+ M('ดึงข้อ (Pull-up)','pullup pull-up ดึงข้อ บาร์','elbow','hi',155,80,[],[['min>85','ดึงไม่ถึงคาง/บาร์ งอศอกให้มากขึ้น'],['max<155','ปล่อยแขนไม่สุดตอนลง']]),
+ HD('แพลงก์ (ค้าง)','plank หน้าท้อง core','body',[['body<165','สะโพกตกหรือยกสูง ให้ลำตัวเป็นเส้นตรง']]),
+ HD('วอลล์ซิท (ค้าง)','wall sit นั่งพิงกำแพง','knee',[['knee>110','ต้นขายังสูงกว่าแนวขนาน ลงต่ำอีก'],['knee<75','ย่อต่ำเกินไป']])
+]},
+{id:'racket',n:'แบดมินตัน / เทนนิส',m:[
+ M('สแมช / เสิร์ฟเหนือศีรษะ','smash serve ตบ เสิร์ฟ ตีโอเวอร์เฮด','elbow','lo',155,110,[['lean>35','เอนตัวมากเกินไป']],[['max<160','เหยียดแขนไม่สุดตอนปะทะลูก']]),
+ M('ลันจ์เก็บลูกหน้าเน็ต','lunge net ก้าว หน้าเน็ต','knee','hi',165,120,[['lean>35','ลำตัวโน้มมาก']],[['min>125','ก้าวไม่ลึกพอ'],['min<80','ย่อลึกเกินไป เสี่ยงเข่า']]),
+ HD('ท่าเตรียมพร้อม (Ready stance)','ready stance เตรียม ตั้งรับ','knee',[['knee>165','ยืนตรงเกินไป งอเข่าเล็กน้อย'],['knee<110','ย่อมากเกินไป'],['lean>25','โน้มตัวมากเกินไป']])
+]},
+{id:'volley',n:'วอลเลย์บอล',m:[
+ M('ตบ (Spike)','spike ตบ','elbow','lo',155,110,[['lean>35','เอนตัวมากเกินไป']],[['max<160','เหยียดแขนไม่สุดตอนปะทะลูก']]),
+ M('รับลูกใต้แขน (Bump)','bump dig รับ','knee','hi',165,135,[['elbow<150','แขนงอ รับลูกด้วยแขนที่เหยียดตรง']],[['min>145','งอเข่าลดระดับรับลูกมากขึ้น']]),
+ M('เซ็ตบอล (Set)','set เซ็ต ส่งลูก','elbow','lo',150,100,[],[['max<150','ส่งแขนไม่สุดตอนปล่อยลูก']]),
+ M('บล็อก (Block)','block บล็อก','shoulder','lo',150,60,[['elbow<150','แขนงอ เหยียดแขนตรงเหนือตาข่าย']],[['max<160','ยกแขนไม่ตรงเหนือศีรษะ']],'ตั้งกล้องด้านข้าง ให้เห็นแขนและลำตัวทั้งหมด')
+]},
+{id:'basket',n:'บาสเกตบอล',m:[
+ M('ชู้ตบอล (Shooting form)','shoot ชู้ต ยิง','elbow','lo',160,100,[['lean>25','เอนตัวไปด้านหลังมาก']],[['max<160','ส่งแขนไม่สุดตอนปล่อยลูก (follow-through)'],['min>110','ตอนตั้งลูกศอกควรงอประมาณ 90°']]),
+ M('เลย์อัพ (ยกเข่าส่งตัว)','layup เลย์อัพ ยกเข่า','hip','hi',165,110,[],[['min>120','ยกเข่าส่งตัวให้สูงขึ้น']]),
+ HD('ท่าตั้งรับ / ดริบเบิล','dribble defense ดริบเบิล ตั้งรับ','knee',[['knee>165','ยืนตรงเกินไป ย่อเข่าลง'],['knee<100','ย่อมากเกินไป'],['lean>45','โน้มตัวมาก']])
+]},
+{id:'football',n:'ฟุตบอล',m:[
+ M('เตะ / ยิงประตู','kick shoot เตะ ยิง','knee','hi',160,100,[['lean>40','เอนตัวมากเกินไป']],[['min>100','เหวี่ยงขาหลังไม่พอ งอเข่าให้มากขึ้น']],'ตั้งกล้องด้านข้างฝั่งขาที่ใช้เตะ'),
+ HD('ท่าตั้งรับ','defense stance ตั้งรับ เตรียม','knee',[['knee>165','ยืนตรงเกินไป ย่อเข่าลง'],['knee<110','ย่อมากเกินไป'],['lean>35','โน้มตัวมาก']])
+]},
+{id:'run',n:'วิ่ง / กรีฑา',m:[
+ HD('ท่าวิ่ง (ฟอร์มแขน-ลำตัว)','running วิ่ง ฟอร์ม','elbow',[['lean>20','ลำตัวโน้มมาก ให้โน้มเล็กน้อยจากข้อเท้า'],['elbow>130','ศอกเหยียดเกินไป ควรงอราว 90°'],['elbow<60','ศอกงอมากเกินไป']]),
+ M('ยกเข่าสูง (High knees)','high knees ยกเข่า','hip','hi',165,100,[['lean>20','ลำตัวเอนมาก']],[['min>100','ยกเข่าให้สูงถึงระดับสะโพก']]),
+ M('ย่อเตรียมกระโดดไกล','jump กระโดด ย่อ','knee','hi',165,100,[['lean>50','โน้มตัวมากเกินไป']],[['min>110','ย่อเตรียมให้ลึกขึ้น']])
+]},
+{id:'martial',n:'มวย / ศิลปะป้องกันตัว',m:[
+ M('หมัดตรง','punch jab cross หมัด','elbow','lo',160,110,[['lean>30','โน้มตัวตามหมัดมาก รักษาสมดุล']],[['max<160','ปล่อยหมัดไม่สุดแขน']]),
+ M('เตะตรง / เตะเข่า','kick front kick เตะ','knee','hi',160,90,[['lean>40','เอนตัวมากเกินไป']],[['min>95','ยกเข่าให้สูงก่อนเตะ']],'ตั้งกล้องด้านข้างฝั่งขาที่เตะ'),
+ HD('ท่าตั้งการ์ด','guard การ์ด ตั้งการ์ด','elbow',[['elbow>130','การ์ดหลวม แขนเหยียดเกินไป'],['elbow<50','แขนงอแคบเกินไป'],['knee>170','ยืนตรง งอเข่าเล็กน้อย']])
+]},
+{id:'yoga',n:'โยคะ / ยืดเหยียด',m:[
+ HD('ท่าสุนัขก้มหน้า','downward dog สุนัข','hip',[['hip>110','ดันสะโพกขึ้นสูงเป็นรูปตัว V คว่ำ'],['elbow<155','เหยียดแขนให้ตรง'],['knee<150','เหยียดเข่าให้ตรงขึ้น']]),
+ HD('ท่านักรบ (Warrior II / ลันจ์ค้าง)','warrior นักรบ ลันจ์','knee',[['knee>110','งอเข่าหน้าให้ถึงราว 90°'],['knee<75','งอเข่ามากเกินไป'],['lean>20','ลำตัวเอียง ยืดตัวตรง']],'ตั้งกล้องด้านข้าง ให้เห็นขาหน้า'),
+ HD('ท่าสะพาน (Bridge)','bridge สะพาน สะโพก','hip',[['hip<150','ยกสะโพกให้สูงขึ้นจนไหล่-สะโพก-เข่าเป็นเส้นตรง']],'ตั้งกล้องด้านข้าง ขณะนอนหงาย'),
+ HD('ก้มแตะปลายเท้า','forward fold ก้ม ยืดหลังขา','hip',[['hip>100','ก้มลำตัวลงอีก'],['knee<150','เหยียดเข่าให้ตรงขึ้น']])
+]},
+{id:'free',n:'ทดสอบตัวตรวจจับ',m:[
+ {n:'โหมดทดสอบ (ไม่ตัดสินท่า)',kw:'test free ทดสอบ',free:1,k:'elbow',w:[],e:[],tip:'ใช้ดูว่าตัวตรวจจับจับท่าของกีฬาที่ต้องการได้แม่นแค่ไหน ดูมุม ความมั่นใจ และ FPS'}
+]}
+];
+const JL={elbow:'มุมศอก',knee:'มุมเข่า',hip:'มุมสะโพก',shoulder:'มุมไหล่',body:'มุมลำตัว'};
+let DB={days:{},custom:{}},storeOK=true;
+try{const r=JSON.parse(localStorage.getItem('posecoach:v1')||'null');if(r)DB={days:r.days||{},custom:r.custom||{}}}catch(e){storeOK=false}
+const custom=DB.custom;
+function save(){try{localStorage.setItem('posecoach:v1',JSON.stringify(DB));storeOK=true}catch(e){storeOK=false}
+ const n=document.getElementById('logNote');if(n&&!storeOK)n.textContent='บันทึกลงเบราว์เซอร์ไม่ได้ในหน้านี้ ข้อมูลจะหายเมื่อปิดหน้า ใช้ "ส่งออกข้อมูล" เพื่อสำรองก่อนปิด'}
+const esc=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const armed=new Map();
+function arm(btn,txt,fn){const a=armed.get(btn);if(a){clearTimeout(a.t);btn.textContent=a.o;armed.delete(btn);fn();return}
+ const o=btn.textContent;btn.textContent=txt;armed.set(btn,{o,t:setTimeout(()=>{btn.textContent=o;armed.delete(btn)},3500)})}
+const dayKey=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+
+// ---- geometry ----
+let W=640,H=480;
+const pt=(lm,i)=>({x:lm[i].x*W,y:lm[i].y*H,v:lm[i].visibility??1});
+function ang(a,b,c){const v1={x:a.x-b.x,y:a.y-b.y},v2={x:c.x-b.x,y:c.y-b.y};
+ const d=Math.hypot(v1.x,v1.y)*Math.hypot(v2.x,v2.y);if(!d)return 0;
+ return Math.acos(Math.max(-1,Math.min(1,(v1.x*v2.x+v1.y*v2.y)/d)))*180/Math.PI}
+const fromVert=(a,b)=>Math.atan2(Math.abs(b.x-a.x),Math.abs(b.y-a.y))*180/Math.PI; // 0 = ตั้งตรง
+function measure(lm,S){
+ const o={};for(const k in S)o[k]=pt(lm,S[k]);
+ return{pts:o,elbow:ang(o.sh,o.el,o.wr),knee:ang(o.hp,o.kn,o.an),hip:ang(o.sh,o.hp,o.kn),
+  shoulder:ang(o.hp,o.sh,o.el),body:ang(o.sh,o.hp,o.an),lean:fromVert(o.hp,o.sh),arm:fromVert(o.sh,o.el)}}
+const vis=(lm,S)=>Object.values(S).reduce((s,i)=>s+(lm[i].visibility??0),0)/6;
+
+// ---- state ----
+let cat=CATS[0],MV=CATS[0].m[0],q='',pose=null,stream=null,facing='user',running=false,busy=false,mirror=true,ready=false;
+let st,fps=0,lastT=0;
+const vid=document.createElement('video');vid.playsInline=true;vid.muted=true;vid.loop=true;
+const cv=$('cv'),ctx=cv.getContext('2d');
+function ev(rules,c){const o=[];for(const [x,msg] of rules){const m=x.match(/^(\w+)([<>])(-?\d+)$/);if(m&&(m[2]==='>'?c[m[1]]>+m[3]:c[m[1]]<+m[3]))o.push(msg)}return o}
+function reset(){st={phase:'rest',min:999,max:0,issues:new Set(),reps:0,good:0,total:0,scoreSum:0};$('reps').textContent='0';$('score').textContent='-';$('log').innerHTML='';$('logEmpty').style.display='';}
+
+// ---- เลือกหมวด / ท่า / ค้นหา ----
+function pickCat(i){cat=CATS[i];q='';$('q').value='';
+ document.querySelectorAll('#tabs button').forEach((b,j)=>b.setAttribute('aria-pressed',j===i));
+ renderMoves();pickMove(cat.m[0]);}
+let curList=[];
+function renderMoves(){
+ const all=cat.m.concat(custom[cat.id]||[]),t=q.trim().toLowerCase();
+ curList=t?all.filter(m=>(m.n+' '+(m.kw||'')).toLowerCase().includes(t)):all;
+ const sel=$('moves');sel.innerHTML='';
+ const add=(v,txt,on)=>{const o=document.createElement('option');o.value=v;o.textContent=txt;if(on)o.selected=true;sel.appendChild(o)};
+ if(!curList.includes(MV))add(-1,MV.n+' (ท่าที่ใช้อยู่)',true);
+ curList.forEach((m,i)=>add(i,m.n+(m.custom?' (กำหนดเอง)':''),m===MV));
+ if(curList.includes(MV))sel.value=curList.indexOf(MV);
+ $('cnt').textContent=curList.length+' / '+all.length+' ท่า';
+ if(!curList.length&&t){$('cnt').textContent='ไม่พบท่า "'+t.replace(/[<>&"]/g,'')+'" สร้างเป็นท่ากำหนดเองได้ด้านล่าง';$('cName').value=q;$('custom').open=true}
+}
+$('moves').onchange=e=>{const i=+e.target.value;if(i>=0&&curList[i])pickMove(curList[i])};
+function pickMove(m){MV=m;
+ $('exName').textContent=m.n;$('angLbl').textContent=JL[m.k]||'มุม';$('tip').textContent=m.tip||TIP;
+ $('repPanel').querySelector('.big').style.display=m.free?'none':'';$('logPanel').style.display=(m.free||m.hold)?'none':'';
+ $('bDelMove').hidden=!m.custom;$('setBar').style.display=m.free?'none':'';
+ $('repsLbl').textContent=m.hold?'วินาทีที่ท่าถูก':'จำนวนครั้ง';$('scoreLbl').textContent=m.hold?'ท่าถูกกี่ %':'คะแนนท่าล่าสุด';
+ reset();renderMoves();}
+CATS.forEach((c,i)=>{const b=document.createElement('button');b.type='button';b.textContent=c.n;b.onclick=()=>pickCat(i);$('tabs').appendChild(b)});
+$('q').oninput=e=>{q=e.target.value;renderMoves()};
+$('cAdd').onclick=()=>{const n=$('cName').value.trim();if(!n){$('cName').focus();return}
+ const m=M(n,'','' +$('cJoint').value,$('cRest').value,+$('cHi').value,+$('cLo').value,[],[],'ท่าที่กำหนดเอง: นับครั้งจากมุม'+JL[$('cJoint').value]+' ตามเกณฑ์ที่ตั้งไว้ ยังไม่มีกฎจับท่าผิด');
+ m.custom=1;(custom[cat.id]=custom[cat.id]||[]).push(m);save();q='';$('q').value='';renderMoves();pickMove(m);$('custom').open=false};
+
+// ---- rep logic ----
+function track(p){
+ const e=MV,a=p[e.k];
+ const atRest=e.rest==='hi'?a>=e.hi:a<=e.lo;
+ const atFar=e.rest==='hi'?a<=e.lo:a>=e.hi;
+ if(st.phase==='rest'){if(!atRest){st.phase='out';st.min=a;st.max=a;st.issues=new Set();}return}
+ st.min=Math.min(st.min,a);st.max=Math.max(st.max,a);ev(e.w,p).forEach(w=>st.issues.add(w));
+ if(atFar)st.phase='far';
+ if(atRest){if(st.phase==='far')finish();st.phase='rest'}
+}
+function finish(){
+ ev(MV.e,{min:st.min,max:st.max}).forEach(w=>st.issues.add(w));
+ const iss=[...st.issues],sc=Math.max(0,100-iss.length*20);
+ st.reps++;st.scoreSum+=sc;$('reps').textContent=st.reps;$('score').textContent=sc;$('logEmpty').style.display='none';
+ const li=document.createElement('li');li.textContent=`ครั้งที่ ${st.reps}: ${sc} คะแนน${iss.length?' – '+iss.join('; '):' – ท่าดี'}`;
+ $('log').prepend(li);while($('log').children.length>12)$('log').lastChild.remove();
+}
+
+// ---- results ----
+function draw(r,S){
+ ctx.drawImage(r.image,0,0,W,H);
+ const lm=r.poseLandmarks,mine=Object.values(S);
+ ctx.lineWidth=Math.max(3,W/200);ctx.lineCap='round';
+ CONN.forEach(([a,b])=>{if((lm[a].visibility??0)<.4||(lm[b].visibility??0)<.4)return;
+  ctx.strokeStyle=mine.includes(a)&&mine.includes(b)?'#3be0c4':'rgba(255,255,255,.55)';ctx.beginPath();ctx.moveTo(lm[a].x*W,lm[a].y*H);ctx.lineTo(lm[b].x*W,lm[b].y*H);ctx.stroke()});
+ [11,12,13,14,15,16,23,24,25,26,27,28].forEach(i=>{if((lm[i].visibility??0)<.4)return;ctx.fillStyle=mine.includes(i)?'#ffb020':'#fff';ctx.beginPath();ctx.arc(lm[i].x*W,lm[i].y*H,Math.max(4,W/150),0,7);ctx.fill()});
+}
+function label(t,x,y){
+ ctx.save();if(mirror){ctx.translate(x,y);ctx.scale(-1,1);x=0;y=0}
+ ctx.font=`700 ${Math.round(W/32)}px sans-serif`;ctx.fillStyle='#000';ctx.fillText(t,x+2,y+2);ctx.fillStyle='#fff';ctx.fillText(t,x,y);ctx.restore()}
+
+function onResults(r){
+ ready=true;
+ const now=performance.now(),dt=lastT?Math.min(.25,(now-lastT)/1000):0;
+ if(lastT)fps=fps*.85+(1000/(now-lastT))*.15;lastT=now;
+ if(r.image.videoWidth&&(W!==r.image.videoWidth)){W=r.image.videoWidth;H=r.image.videoHeight;cv.width=W;cv.height=H}
+ if(!r.poseLandmarks){ctx.drawImage(r.image,0,0,W,H);$('cues').innerHTML='<div class="mut">ไม่พบร่างกายในภาพ ถอยกล้องให้เห็นทั้งตัว</div>';$('msg').textContent='ไม่พบร่างกาย';return}
+ const lm=r.poseLandmarks;
+ const side=vis(lm,L)>=vis(lm,R)?'L':'R',S=side==='L'?L:R;
+ const p=measure(lm,S);draw(r,S);
+ const e=MV,a=p[e.k];
+ label(Math.round(p.elbow)+'°',p.pts.el.x+10,p.pts.el.y);
+ label(Math.round(p.knee)+'°',p.pts.kn.x+10,p.pts.kn.y);
+ label(Math.round(p.hip)+'°',p.pts.hp.x+10,p.pts.hp.y);
+ $('ang').textContent=Math.round(a)+'°';
+ const conf=Math.round(vis(lm,S)*100);
+ let w=[];
+ if(!e.free){w=ev(e.w,p);
+  if(e.hold){st.total+=dt;if(!w.length)st.good+=dt;$('reps').textContent=st.good.toFixed(0);$('score').textContent=st.total>1?Math.round(st.good/st.total*100):'-'}
+  else track(p)}
+ $('cues').innerHTML=e.free?'<div class="mut">โหมดนี้แสดงเฉพาะค่าที่ตรวจจับได้ ยังไม่มีเกณฑ์ตัดสินท่า</div>'
+  :(w.length?w.map(c=>`<div class="cue">${c}</div>`).join(''):'<div class="cue ok">ท่าอยู่ในเกณฑ์ ทำต่อได้</div>');
+ $('msg').textContent=`${e.n} · ตรวจจับด้าน${side==='L'?'ซ้าย':'ขวา'} · ความมั่นใจ ${conf}%`;
+ const rows=[['ด้านที่ใช้',side==='L'?'ซ้าย':'ขวา'],['ความมั่นใจ',conf+'%'],['FPS',fps.toFixed(0)],['มุมศอก',p.elbow.toFixed(0)+'°'],['มุมไหล่',p.shoulder.toFixed(0)+'°'],['มุมสะโพก',p.hip.toFixed(0)+'°'],['มุมเข่า',p.knee.toFixed(0)+'°'],['ลำตัวเอียงจากแนวดิ่ง',p.lean.toFixed(0)+'°'],['แนวไหล่-สะโพก-ข้อเท้า',p.body.toFixed(0)+'°'],['ต้นแขนเอียงจากแนวดิ่ง',p.arm.toFixed(0)+'°']];
+ $('tbl').innerHTML=rows.map(([x,y])=>`<tr><td>${x}</td><td>${y}</td></tr>`).join('');
+}
+
+// ---- input ----
+async function initPose(){
+ if(pose)return;
+ if(typeof Pose==='undefined')throw new Error('โหลดไลบรารีไม่สำเร็จ');
+ pose=new Pose({locateFile:f=>BASE+f});
+ pose.setOptions({modelComplexity:1,smoothLandmarks:true,minDetectionConfidence:.5,minTrackingConfidence:.5});
+ pose.onResults(onResults);
+ await pose.initialize();
+}
+function stopAll(){running=false;if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}vid.pause();vid.removeAttribute('src');vid.srcObject=null;}
+async function begin(){
+ $('msg').textContent='กำลังโหลดโมเดลตรวจจับ...';
+ try{await initPose();await vid.play();running=true;reset();}
+ catch(err){$('msg').textContent='เริ่มไม่สำเร็จ: '+(err.message||err)+' ถ้าหน้านี้ถูกจำกัดการโหลดโมเดลหรือกล้อง ให้เปิดเป็นไฟล์ในเครื่องแทน';}
+}
+async function camera(){
+ stopAll();
+ try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:facing,width:{ideal:960},height:{ideal:720}},audio:false});}
+ catch(err){$('msg').textContent='เปิดกล้องไม่ได้: อนุญาตการใช้กล้อง หรืออัปโหลดวิดีโอแทน';return}
+ mirror=facing==='user';$('stage').classList.toggle('mir',mirror);
+ vid.srcObject=stream;await begin();
+}
+$('bCam').onclick=camera;
+$('bFlip').onclick=()=>{facing=facing==='user'?'environment':'user';camera()};
+$('bStop').onclick=()=>{stopAll();$('msg').textContent='หยุดแล้ว'};
+$('file').onchange=async e=>{const f=e.target.files[0];if(!f)return;stopAll();mirror=false;$('stage').classList.remove('mir');vid.src=URL.createObjectURL(f);await begin()};
+async function loop(){
+ if(running&&!busy&&vid.readyState>=2&&vid.videoWidth){busy=true;try{await pose.send({image:vid})}catch(e){}busy=false}
+ requestAnimationFrame(loop)}
+
+// ---- บันทึกและสถิติ ----
+let view='today';
+const catName=id=>(CATS.find(c=>c.id===id)||{n:id}).n;
+const fmtDay=d=>{const[y,m,dd]=d.split('-').map(Number);return new Date(y,m-1,dd).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'numeric'})};
+const sumDay=l=>({sets:l.length,reps:l.filter(x=>!x.h).reduce((a,x)=>a+x.n,0),sec:l.filter(x=>x.h).reduce((a,x)=>a+x.n,0),moves:new Set(l.map(x=>x.c+'|'+x.m)).size,cats:new Set(l.map(x=>x.c)).size});
+const tot=s=>s.reps+' ครั้ง'+(s.sec?' + ค้าง '+s.sec+' วินาที':'');
+function byMove(l){const g=new Map();l.forEach(x=>{const k=x.c+'|'+x.m;if(!g.has(k))g.set(k,{c:x.c,m:x.m,h:x.h,l:[]});g.get(k).l.push(x)});return[...g.values()]}
+const unit=h=>h?'วินาที':'ครั้ง';
+function endSet(manual){
+ const e=MV;if(e.free)return;
+ const n=manual!=null?manual:(e.hold?Math.round(st.good):st.reps);
+ if(!(n>0)){flash('ยังไม่มีจำนวนให้บันทึก');return}
+ let sc=null;
+ if(manual==null){sc=e.hold?(st.total>1?Math.round(st.good/st.total*100):null):(st.reps?Math.round(st.scoreSum/st.reps):null)}
+ const d=dayKey();(DB.days[d]=DB.days[d]||[]).push({c:cat.id,m:e.n,h:e.hold?1:0,n,s:sc,t:Date.now()});
+ save();reset();flash('บันทึกแล้ว: '+n+' '+unit(e.hold));renderLog();
+}
+let fT;function flash(t){$('setMsg').textContent=t;clearTimeout(fT);fT=setTimeout(()=>$('setMsg').textContent='',3000)}
+function viewToday(){
+ const l=DB.days[dayKey()]||[];
+ if(!l.length)return '<p class="mut">วันนี้ยังไม่มีบันทึก ออกกำลังแล้วกด "จบเซตและบันทึก" หรือเพิ่มเซตเอง</p>';
+ const s=sumDay(l);
+ let h=`<p><b>${fmtDay(dayKey())}</b> ออก ${s.cats} หมวด ${s.moves} ท่า รวม ${s.sets} เซต (${tot(s)})</p>`;
+ CATS.forEach(c=>{const g=byMove(l.filter(x=>x.c===c.id));if(!g.length)return;
+  h+=`<div class="mv"><h3>${esc(c.n)}</h3>`+g.map(m=>`<div><b>${esc(m.m)}</b> <span class="mut">${m.l.length} เซต · รวม ${m.l.reduce((a,x)=>a+x.n,0)} ${unit(m.h)}</span><ol>${m.l.map((x,i)=>`<li>เซต ${i+1}: ${x.n} ${unit(x.h)}${x.s!=null?' · คะแนนเฉลี่ย '+x.s:''}<button type="button" class="del" data-del="${x.t}">ลบ</button></li>`).join('')}</ol></div>`).join('')+'</div>'});
+ return h;
+}
+function viewStats(){
+ const keys=Object.keys(DB.days).sort().reverse(),all=keys.flatMap(k=>DB.days[k]);
+ if(!all.length)return '<p class="mut">ยังไม่มีสถิติ เริ่มบันทึกเซตแรกได้เลย</p>';
+ const s=sumDay(all);
+ let h=`<div class="sum"><div><b>${keys.length}</b><span class="mut">วันที่ออกกำลัง</span></div><div><b>${s.sets}</b><span class="mut">เซตทั้งหมด</span></div><div><b>${s.reps}</b><span class="mut">ครั้งรวม</span></div><div><b>${s.sec}</b><span class="mut">วินาทีท่าค้าง</span></div></div>`;
+ const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(dayKey(d))}
+ const data=days.map(d=>sumDay(DB.days[d]||[])),mx=Math.max(1,...data.map(x=>x.reps));
+ h+='<h3 style="font-size:.95rem">7 วันล่าสุด (จำนวนครั้ง)</h3>'+days.map((d,i)=>`<div class="brow"><span class="mut">${d.slice(8)}/${d.slice(5,7)}</span><i style="width:${data[i].reps/mx*100}%"></i><span>${data[i].reps} ครั้ง · ${data[i].sets} เซต</span></div>`).join('');
+ h+='<h3 style="font-size:.95rem">รายท่า (สะสม)</h3><div style="overflow-x:auto"><table><tr><th>ท่า</th><th>เซต</th><th>รวม</th><th>เซตที่ดีที่สุด</th><th>คะแนนเฉลี่ย</th></tr>'
+ +byMove(all).sort((a,b)=>b.l.length-a.l.length).map(m=>{const sc=m.l.filter(x=>x.s!=null).map(x=>x.s);return `<tr><td>${esc(m.m)}<div class="mut">${esc(catName(m.c))}</div></td><td>${m.l.length}</td><td>${m.l.reduce((a,x)=>a+x.n,0)} ${unit(m.h)}</td><td>${Math.max(...m.l.map(x=>x.n))} ${unit(m.h)}</td><td>${sc.length?Math.round(sc.reduce((a,b)=>a+b,0)/sc.length):'-'}</td></tr>`}).join('')+'</table></div>';
+ h+='<h3 style="font-size:.95rem">ประวัติรายวัน</h3>'+keys.slice(0,30).map(k=>{const l=DB.days[k],t=sumDay(l);
+  return `<details><summary>${fmtDay(k)} · ${t.sets} เซต (${tot(t)})</summary>${byMove(l).map(m=>`<div>${esc(m.m)}: ${m.l.map(x=>x.n).join(', ')} ${unit(m.h)} <span class="mut">(${esc(catName(m.c))})</span></div>`).join('')}<button type="button" class="del" data-delday="${k}">ลบวันนี้ทั้งวัน</button></details>`}).join('');
+ return h;
+}
+function csv(){const c=v=>'"'+String(v).replace(/"/g,'""')+'"';
+ const rows=[['date','category','move','type','count','avg_score','time']];
+ Object.keys(DB.days).sort().forEach(d=>DB.days[d].forEach(x=>rows.push([d,catName(x.c),x.m,x.h?'hold_seconds':'reps',x.n,x.s==null?'':x.s,new Date(x.t).toLocaleTimeString('th-TH')])));
+ return rows.map(r=>r.map(c).join(',')).join('\n')}
+function viewExport(){return `<p class="mut">คัดลอกข้อความนี้ไปวางในโน้ตหรือสเปรดชีตเพื่อสำรองข้อมูล (รูปแบบ CSV)</p><textarea id="csvTa" readonly>${esc(csv())}</textarea><div class="bar"><button type="button" id="bCopy" class="pri">คัดลอก</button><button type="button" class="danger" data-clearall="1">ล้างบันทึกทั้งหมด</button><span class="mut" id="cpMsg"></span></div>`}
+function renderLog(){$('logBody').innerHTML=view==='today'?viewToday():view==='stats'?viewStats():viewExport();
+ document.querySelectorAll('#logTabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===view))}
+document.querySelectorAll('#logTabs button').forEach(b=>b.onclick=()=>{view=b.dataset.v;renderLog()});
+$('logBody').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.del)arm(b,'ยืนยันลบ?',()=>{const d=dayKey();DB.days[d]=(DB.days[d]||[]).filter(x=>String(x.t)!==b.dataset.del);if(!DB.days[d].length)delete DB.days[d];save();renderLog()});
+ else if(b.dataset.delday)arm(b,'ยืนยันลบทั้งวัน?',()=>{delete DB.days[b.dataset.delday];save();renderLog()});
+ else if(b.dataset.clearall)arm(b,'กดอีกครั้งเพื่อล้างทั้งหมด',()=>{DB.days={};save();renderLog()});
+ else if(b.id==='bCopy'){const ta=$('csvTa');ta.select();const ok=()=>$('cpMsg').textContent='คัดลอกแล้ว',no=()=>$('cpMsg').textContent='เลือกข้อความแล้ว กด Ctrl+C หรือกดค้างเพื่อคัดลอก';
+  try{navigator.clipboard.writeText(ta.value).then(ok,no)}catch(x){no()}}};
+$('bSet').onclick=()=>endSet();
+$('bReset').onclick=()=>{reset();flash('ล้างตัวนับแล้ว')};
+$('bMan').onclick=()=>{const n=Math.round(+$('manN').value);if(!(n>0)){$('manN').focus();return}endSet(n);$('manN').value=''};
+$('bDelMove').onclick=()=>arm($('bDelMove'),'กดอีกครั้งเพื่อยืนยันลบท่านี้',()=>{
+ const l=custom[cat.id]||[],i=l.indexOf(MV);if(i<0)return;l.splice(i,1);save();q='';$('q').value='';renderMoves();pickMove(cat.m[0])});
+
+// ---- อันดับ (Supabase) ----
+// ใส่ค่าจาก Supabase: Project URL และ anon/publishable key เท่านั้น (ห้ามใส่ secret/service_role key)
+const SB={url:'',key:''};
+const sbOn=()=>!!(SB.url&&SB.key);
+const sbH=()=>({apikey:SB.key,Authorization:'Bearer '+SB.key,'Content-Type':'application/json'});
+const lsGet=k=>{try{return localStorage.getItem(k)||''}catch(e){return ''}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+let player=lsGet('posecoach:player'),share=lsGet('posecoach:share')==='1',bMode='move',seq=0;
+$('bName').value=player;$('bShare').checked=share;
+$('bName').oninput=e=>{player=e.target.value.trim().slice(0,20);lsSet('posecoach:player',player)};
+$('bShare').onchange=e=>{share=e.target.checked;lsSet('posecoach:share',share?'1':'0');$('bMsg').textContent=share&&!player?'ใส่ชื่อที่แสดงก่อน จึงจะส่งผลได้':''};
+document.querySelectorAll('#bTabs button').forEach(b=>b.onclick=()=>{bMode=b.dataset.m;document.querySelectorAll('#bTabs button').forEach(x=>x.setAttribute('aria-pressed',x===b));loadBoard()});
+async function loadBoard(){
+ const box=$('bBody');
+ if(!sbOn()){box.innerHTML='<p class="mut">ยังไม่ได้เชื่อมฐานข้อมูล (ใส่ URL และ key ในตัวแปร SB)</p>';return}
+ if(MV.free){box.innerHTML='<p class="mut">โหมดทดสอบไม่มีอันดับ</p>';return}
+ const byMove=bMode==='move';
+ let u=SB.url+'/rest/v1/scores?select=player,exercise,hold,n,score&limit=200&cat=eq.'+encodeURIComponent(cat.id);
+ u+=byMove?'&exercise=eq.'+encodeURIComponent(MV.n)+'&order=n.desc,score.desc.nullslast':'&score=not.is.null&order=score.desc,n.desc';
+ const my=++seq;box.innerHTML='<p class="mut">กำลังโหลด...</p>';
+ try{
+  const r=await fetch(u,{headers:sbH()});if(!r.ok)throw 0;const rows=await r.json();if(my!==seq)return;
+  const seen=new Set(),top=[];
+  for(const x of rows){const k=x.player.toLowerCase();if(seen.has(k))continue;seen.add(k);top.push(x);if(top.length>=10)break}
+  if(!top.length){box.innerHTML='<p class="mut">ยังไม่มีใครขึ้นอันดับ เป็นคนแรกเลย</p>';return}
+  const medal=['🥇','🥈','🥉'];
+  box.innerHTML='<div style="overflow-x:auto"><table><tr><th>#</th><th>ผู้เล่น</th><th>'+(byMove?'ผลงานที่ดีที่สุด':'ท่า')+'</th><th>คะแนนท่า</th></tr>'+top.map((x,i)=>{
+   const me=player&&x.player.toLowerCase()===player.toLowerCase();
+   return `<tr><td>${medal[i]||i+1}</td><td class="${me?'me':''}">${esc(x.player)}</td><td>${byMove?x.n+' '+unit(x.hold):esc(x.exercise)+' <span class="mut">'+x.n+' '+unit(x.hold)+'</span>'}</td><td>${x.score==null?'-':x.score}</td></tr>`}).join('')+'</table></div>';
+ }catch(e){if(my===seq)box.innerHTML='<p class="mut">โหลดอันดับไม่ได้ ลองใหม่อีกครั้ง</p>'}
+}
+async function submitScore(c,m,h,n,s){
+ if(!sbOn()||!share||!player)return;
+ try{
+  const r=await fetch(SB.url+'/rest/v1/scores',{method:'POST',headers:{...sbH(),Prefer:'return=minimal'},body:JSON.stringify({player,cat:c,exercise:m,hold:h,n,score:s})});
+  $('bMsg').textContent=r.ok?'ส่งผลขึ้นอันดับแล้ว':'ส่งไม่สำเร็จ ('+r.status+')';
+ }catch(e){$('bMsg').textContent='ส่งไม่สำเร็จ ตรวจอินเทอร์เน็ต'}
+ loadBoard();
+}
+const _pm=pickMove;pickMove=function(m){_pm(m);loadBoard()};
+const _es=endSet;endSet=function(manual){
+ const e=MV,c=cat;let n=0,sc=null;
+ if(manual==null&&!e.free){n=e.hold?Math.round(st.good):st.reps;sc=e.hold?(st.total>1?Math.round(st.good/st.total*100):null):(st.reps?Math.round(st.scoreSum/st.reps):null)}
+ _es(manual);
+ if(n>0)submitScore(c.id,e.n,!!e.hold,n,sc);
+};
+
+renderLog();pickCat(0);loop();
+</script>
+</body>
+</html>
